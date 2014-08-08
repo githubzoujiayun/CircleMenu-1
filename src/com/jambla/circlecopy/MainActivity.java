@@ -1,12 +1,14 @@
 package com.jambla.circlecopy;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.Bundle;
-import android.widget.RelativeLayout;
-import android.widget.RelativeLayout.LayoutParams;
+import android.util.Log;
+import android.view.MotionEvent;
+
+import com.jambla.circlecopy.CircleMenu.OnCircleItemSelectedListener;
 
 public class MainActivity extends Activity {
+	private CircleMenu circleMenu;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -21,7 +23,7 @@ public class MainActivity extends Activity {
 	 * 查找布局组件
 	 */
 	private void findView() {
-		
+		circleMenu = (CircleMenu) findViewById(R.id.circle_menu);
 	}
 
 	/*
@@ -34,6 +36,20 @@ public class MainActivity extends Activity {
 	 * 为布局组件添加监听器
 	 */
 	private void addListener() {
-
+		circleMenu.setOnCircleItemSelectedListener(new OnCircleItemSelectedListener() {
+			@Override
+			public void onItemClickedListener(int index) {
+				if(index==-2){
+					circleMenu.closeOrOpen();
+				}
+				
+			}
+		});
+	}
+	
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		Log.d("jambla", "kasdfjhasdhflasdhflkjahdsfa");
+		return true;
 	}
 }

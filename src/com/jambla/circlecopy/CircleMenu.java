@@ -14,24 +14,34 @@ import android.graphics.Rect;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Toast;
 
 public class CircleMenu extends View {
 	private static final String TAG = "circleMenu";
-	private static int screenWidth ; 
-	private static int screenHeight ;
 	private int lastX;
 	private int lastY;
+	public interface OnCircleItemSelectedListener{
+		public void onItemClickedListener(int index);
+	}
+	private OnCircleItemSelectedListener OnCircleItemSelectedListener;
+	
+	public void setOnCircleItemSelectedListener(
+			OnCircleItemSelectedListener l) {
+		this.OnCircleItemSelectedListener = l;
+	}
+
 	/*
 	 * 是否拖动
 	 */
 	private boolean isMove;
+	/*
+	 * 是否关闭
+	 */
+	private boolean isClose;
 	/*
 	 * 旋转子菜单自身
 	 */
@@ -115,9 +125,6 @@ public class CircleMenu extends View {
 
 	public CircleMenu(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		DisplayMetrics dm = getResources().getDisplayMetrics();  
-		screenWidth = dm.widthPixels;
-		screenHeight = dm.heightPixels - 50;
 		mContext = context;
 		// 添加抖动效果，使绘图更好
 		mPfd = new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG
@@ -181,9 +188,6 @@ public class CircleMenu extends View {
 	@Override
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
-		// Log.d(TAG, "mPointX = " + mPointX + " mPointY = " + mPointY
-		// + " mRadius = " + mRadius + " mPaint" + mPaint);
-//		canvas.drawCircle(mPointX, mPointY, mRadius, mPaint);
 		if (mMainMenuHolder == null) {
 			Bitmap bitmap = BitmapFactory.decodeResource(getResources(),
 					mMainMenu);
@@ -191,9 +195,12 @@ public class CircleMenu extends View {
 			mMainMenuHolder.bitmap = bitmap;
 		}
 		drawInCenter(canvas, mMainMenuHolder.bitmap, mPointX, mPointY);
-		for (int i = 0; i < mSubMenuHolder.length; i++) {
-			drawInCenter(canvas, mSubMenuHolder[i].bitmap, mSubMenuHolder[i].x,
-					mSubMenuHolder[i].y);
+		
+		if(!isClose){
+			for (int i = 0; i < mSubMenuHolder.length; i++) {
+				drawInCenter(canvas, mSubMenuHolder[i].bitmap, mSubMenuHolder[i].x,
+						mSubMenuHolder[i].y);
+			}
 		}
 	}
 
@@ -237,6 +244,9 @@ public class CircleMenu extends View {
 			startAngle = computeCurrentAngle(x, y);
 			lastX = (int) event.getRawX();  
             lastY = (int) event.getRawY();
+            if(isClose&&getInCircle(x, y)!=-2){
+            	return false;
+            }
 		} else if (event.getAction() == MotionEvent.ACTION_MOVE) {
 			if(isMove){
 				int dx =(int)event.getRawX() - lastX;  
@@ -282,6 +292,10 @@ public class CircleMenu extends View {
 	}
 
 	private int getInCircle(int x, int y) {
+		if (((x - mPointX) * (x - mPointX) + (y - mPointY) * (y - mPointY)) < menuRadius
+				* menuRadius) {
+			return -2;
+		}
 		for (int i = 0; i < mSubMenuHolder.length; i++) {
 			SubMenuHolder holder = mSubMenuHolder[i];
 			int mx = (int) holder.x;
@@ -325,8 +339,9 @@ public class CircleMenu extends View {
 			int y = (int) e.getY();
 			int menuIndex = getInCircle(x, y);
 			if (menuIndex != -1) {
-				Toast.makeText(mContext, "menu Index =" + menuIndex,
-						Toast.LENGTH_SHORT).show();
+				if(OnCircleItemSelectedListener!=null){
+					OnCircleItemSelectedListener.onItemClickedListener(menuIndex);
+				}
 			}
 			return true;
 		}
@@ -374,5 +389,14 @@ public class CircleMenu extends View {
 		float x;
 		float y;
 	}
+	
+	/*
+	 * 关闭或打开子菜单
+	 */
+	public void closeOrOpen(){
+		isClose = !isClose;
+		invalidate();
+	}
 
 }
+
